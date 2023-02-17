@@ -18,39 +18,31 @@ void filePacker::pack(char* dirPath, char* outPath)
     if( !validateDirPath(dirPath) )
         return;
 
-    QFile result(outPath);
-    if(!result.open(QIODevice::WriteOnly))
+    QFile result( outPath );
+
+    scanDirecory( dirPath );
+
+    if( !saveDirDescription( result) )
     {
-        qInfo() << "Unable to open file: " << outPath << '\n';
+        qInfo() << "Unable to open output file";
+        return;
     }
 
-    QDirIterator it(dirPath, QStringList() << "*.*", QDir::Files | QDir::Dirs, QDirIterator::Subdirectories);
-    while (it.hasNext())
+    if( !result.open(QIODevice::WriteOnly | QIODevice::Append) )    //binary write
     {
-        it.next();
-        if(validateFilePath(it.filePath()))
+        return;
+    }
+
+    QDir dir(dirPath);
+
+    for( qint64 i = 0; i < filesDesc.size(); i++ )
+    {
+        tick->tick();
+        qint64 fileSize = appendFileToResult( dir.filePath(filesDesc[i].path), result );
+        if( fileSize == 0 )
         {
-            QString hash = fileChecksum( it.filePath(), QCryptographicHash::Algorithm::Sha1);
-
-            if( !uniqueFile(hash) )
-                continue;
-
-            qint64 fileSize = appendFileToResult( it.filePath(), result );
-
-            if( fileSize == 0 )
-            {
-                qInfo() << "\nNot all files were packed";
-                return;
-            }
-
-            qInfo() << "File: " << it.filePath() << '\n' <<
-                       "SHA: " << hash << '\n';
-
-            filesDesc.append( fileInfo( it.filePath(), fileSize, hash) );
-        }
-        else
-        {
-            qInfo() << "Not a file: " << it.filePath() << '\n';
+            qInfo() << "\nNot all files were packed";
+            return;
         }
     }
     qInfo() << "\nPacking direcory content finished";
@@ -72,6 +64,60 @@ void filePacker::unPack(char* filePath, char* outDirPath)
     qInfo() << "\nUnpacking direcory content finished";
 }
 
+void filePacker::scanDirecory(char* dirPath)
+{
+    QDirIterator it(dirPath, QStringList() << "*.*", QDir::Files | QDir::Dirs, QDirIterator::Subdirectories);
+    QDir dir(dirPath);
+    while (it.hasNext())
+    {
+        it.next();
+        if(validateFilePath(it.filePath()))
+        {
+            QString hash = fileChecksum( it.filePath(), QCryptographicHash::Algorithm::Sha1);
+
+            if( !uniqueFile(hash) )
+                continue;
+
+            QFile sourceFile(it.filePath());
+            qint64 fileSize = sourceFile.size();
+
+            filesDesc.append( fileInfo( dir.relativeFilePath( it.filePath() ), fileSize, hash) );
+        }
+    }
+}
+
+bool filePacker::saveDirDescription(QFile& resultFile)
+{
+    if( !resultFile.open(QIODevice::WriteOnly | QIODevice::Text) )  // text write
+    {
+        return false;
+    }
+    QTextStream stream( &resultFile );
+    stream << HEADSTART << '\n';
+
+    for( qint64 i = 0; i < filesDesc.size(); i++ )
+    {
+        stream << filesDesc[i].path << '\n';
+        stream << filesDesc[i].size << '\n';
+    }
+
+    stream << HEADEND << '\n';
+
+    resultFile.close();
+
+    return true;
+}
+
+bool filePacker::validateFilePath(const QString& filePath)
+{
+    QFileInfo fi( filePath );
+    if( fi.exists() && fi.isFile() )
+    {
+        return true;
+    }
+    return false;
+}
+
 bool filePacker::validateFilePath(char* filePath)
 {
     QFileInfo fi( filePath );
@@ -84,16 +130,6 @@ bool filePacker::validateFilePath(char* filePath)
         qInfo() << "Given path is not a file:" << filePath;
         return false;
     }
-}
-
-bool filePacker::validateFilePath(const QString& filePath)
-{
-    QFileInfo fi( filePath );
-    if( fi.exists() && fi.isFile() )
-    {
-        return true;
-    }
-    return false;
 }
 
 bool filePacker::validateDirPath(char* dirPath)
@@ -114,7 +150,7 @@ bool filePacker::uniqueFile(const QString& hash)
 {
     for( qint64 i = 0; i < filesDesc.size(); i++ )
     {
-        if( filesDesc[i].hash.compare(hash) == 0 )
+        if( filesDesc[i].hash.compare( hash ) == 0 )
         {
             return false;
         }
@@ -170,14 +206,14 @@ qint64 filePacker::appendFileToResult( const QString& fileName, QFile& resultFil
     int bytesRead;
     int readSize = qMin(fileSize, bufferSize);
 
-    while (readSize > 0 && (bytesRead = inputFile.read(buffer, readSize)) > 0)
+    while( readSize > 0 && (bytesRead = inputFile.read(buffer, readSize) ) > 0 )
     {
         fileSize -= bytesRead;
         resultFile.write( buffer, bytesRead);
         readSize = qMin(fileSize, bufferSize);
     }
     inputFile.close();
-    if(fileSize == 0)
+    if( fileSize == 0 )
         return startingFileSize;
     else
     {
