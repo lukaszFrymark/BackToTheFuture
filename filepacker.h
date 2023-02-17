@@ -3,6 +3,9 @@
 #include <QtCore>
 #include "progressticks.h"
 
+#define HEADSTART "BLOBDESCSTART"
+#define HEADEND "BLOBDESCEND"
+
 class fileInfo
 {
 public:
@@ -19,6 +22,8 @@ public:
     filePacker();
     void pack(char* filePath, char* outPath);
     void unPack(char* filePath, char* outDirPath);
+    void scanDirecory(char* dirPath);
+    bool saveDirDescription(QFile& resultFile);
     bool validateFilePath(char* filePath);
     bool validateFilePath(const QString& filePath);
     bool validateDirPath(char* dirPath);
@@ -30,6 +35,7 @@ public:
     ProgressTicks* tick;
     QString blobFileName;
     QVector<fileInfo> filesDesc;
+
 };
 
 #endif // FILEPACKER_H
