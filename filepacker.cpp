@@ -10,12 +10,12 @@ filePacker::filePacker()
     tick = new ProgressTicks();
 }
 
-void filePacker::pack(char* dirPath, char* outPath)
+void filePacker::pack (char* dirPath, char* outPath )
 {
     qInfo() << "Packing direcory content:" << dirPath << '\n' <<
                "Into file:" << outPath << '\n';
 
-    if( !validateDirPath(dirPath) )
+    if( !validateDirPath( dirPath ) )
         return;
 
     QFile result( outPath );
@@ -28,17 +28,17 @@ void filePacker::pack(char* dirPath, char* outPath)
         return;
     }
 
-    if( !result.open(QIODevice::WriteOnly | QIODevice::Append) )    //binary write
+    if( !result.open( QIODevice::WriteOnly | QIODevice::Append ) )    //binary write
     {
         return;
     }
 
-    QDir dir(dirPath);
+    QDir dir( dirPath );
 
     for( qint64 i = 0; i < filesDesc.size(); i++ )
     {
         tick->tick();
-        qint64 fileSize = appendFileToResult( dir.filePath(filesDesc[i].path), result );
+        qint64 fileSize = appendFileToResult( dir.filePath(filesDesc[i].path ), result );
         if( fileSize == 0 )
         {
             qInfo() << "\nNot all files were packed";
@@ -48,34 +48,51 @@ void filePacker::pack(char* dirPath, char* outPath)
     qInfo() << "\nPacking direcory content finished";
 }
 
-void filePacker::unPack(char* filePath, char* outDirPath)
+void filePacker::unPack( char* filePath, char* outDirPath )
 {
     qInfo() << "Unpacking file content:" << filePath << '\n' <<
                "Into direcory:" << outDirPath << '\n';
 
-    if( !validateFilePath(filePath) || !validateDirPath(outDirPath) )
+    if( !validateFilePath( filePath ) || !validateDirPath( outDirPath ) )
         return;
 
-    for (int i=0; i<10; i++)
+    QFile blob( filePath );
+    qint64 startOfBinaryData = getFilesDescFromBlob( blob );
+    if(startOfBinaryData > 0)
     {
-        tick->tick();
-        QObject().thread()->usleep(1000*1000);
+        blob.seek( startOfBinaryData );  // will move QFile pointer to binary part
     }
+
+    QDir outDir( outDirPath );
+
+    for( qint64 i = 0; i < filesDesc.size(); i++ )
+    {
+        QString outFilePath = outDir.filePath( filesDesc[i].path );
+        QDir outFileDir = QFileInfo( outFilePath ).absoluteDir();
+        if( !QFileInfo::exists( outFileDir.absolutePath() ) )
+        {
+            outFileDir.mkpath( outFileDir.absolutePath() );
+        }
+
+        tick->tick();
+        makeFileFromBlob( outFilePath, filesDesc[i].size, blob );   // will move QFile pointer to next file part
+    }
+
     qInfo() << "\nUnpacking direcory content finished";
 }
 
-void filePacker::scanDirecory(char* dirPath)
+void filePacker::scanDirecory( char* dirPath )
 {
-    QDirIterator it(dirPath, QStringList() << "*.*", QDir::Files | QDir::Dirs, QDirIterator::Subdirectories);
-    QDir dir(dirPath);
+    QDirIterator it( dirPath, QStringList() << "*.*", QDir::Files | QDir::Dirs, QDirIterator::Subdirectories );
+    QDir dir( dirPath );
     while (it.hasNext())
     {
         it.next();
-        if(validateFilePath(it.filePath()))
+        if( validateFilePath( it.filePath() ) )
         {
             QString hash = fileChecksum( it.filePath(), QCryptographicHash::Algorithm::Sha1);
 
-            if( !uniqueFile(hash) )
+            if( !uniqueFile( hash ) )
                 continue;
 
             QFile sourceFile(it.filePath());
@@ -86,9 +103,9 @@ void filePacker::scanDirecory(char* dirPath)
     }
 }
 
-bool filePacker::saveDirDescription(QFile& resultFile)
+bool filePacker::saveDirDescription( QFile& resultFile )
 {
-    if( !resultFile.open(QIODevice::WriteOnly | QIODevice::Text) )  // text write
+    if( !resultFile.open( QIODevice::WriteOnly | QIODevice::Text ) )  // text write
     {
         return false;
     }
@@ -108,7 +125,38 @@ bool filePacker::saveDirDescription(QFile& resultFile)
     return true;
 }
 
-bool filePacker::validateFilePath(const QString& filePath)
+qint64 filePacker::getFilesDescFromBlob( QFile& blob )
+{
+        QTextStream in( &blob );
+
+    if( !blob.open( QIODevice::ReadOnly ) )    //text read
+    {
+        return 0;
+    }
+
+    if( QString( in.readLine() ).compare( HEADSTART ) != 0 )
+    {
+        qInfo() << "Wrong input file format";
+        return 0;
+    }
+
+    while( !in.atEnd() )
+    {
+       QString line = in.readLine();
+
+       if( line.compare( HEADEND ) == 0 )
+       {
+           return in.pos() + sizeof( '\n' ) -sizeof( char );    // position plus newline  minus \0 char
+       }
+       bool converted = false;
+       qint64  size = QString( in.readLine() ).toLongLong( &converted, 10);
+       filesDesc.append( fileInfo( line, converted? size : 0, QString()) );
+    }
+
+    return 0;
+}
+
+bool filePacker::validateFilePath( const QString& filePath )
 {
     QFileInfo fi( filePath );
     if( fi.exists() && fi.isFile() )
@@ -118,7 +166,7 @@ bool filePacker::validateFilePath(const QString& filePath)
     return false;
 }
 
-bool filePacker::validateFilePath(char* filePath)
+bool filePacker::validateFilePath( char* filePath )
 {
     QFileInfo fi( filePath );
     if( fi.exists() && fi.isFile() )
@@ -132,7 +180,7 @@ bool filePacker::validateFilePath(char* filePath)
     }
 }
 
-bool filePacker::validateDirPath(char* dirPath)
+bool filePacker::validateDirPath( char* dirPath )
 {
     QFileInfo fi( dirPath );
     if( fi.exists() && fi.isDir() )
@@ -146,7 +194,7 @@ bool filePacker::validateDirPath(char* dirPath)
     }
 }
 
-bool filePacker::uniqueFile(const QString& hash)
+bool filePacker::uniqueFile( const QString& hash )
 {
     for( qint64 i = 0; i < filesDesc.size(); i++ )
     {
@@ -163,28 +211,28 @@ bool filePacker::uniqueFile(const QString& hash)
     Returns \c QString with hash created from a \a fileName; empty QString otherwise.
     Source: https://stackoverflow.com/questions/16383392/how-to-get-the-sha-1-md5-checksum-of-a-file-with-qt
 */
-QString filePacker::fileChecksum(const QString &fileName, QCryptographicHash::Algorithm hashAlgorithm)
+QString filePacker::fileChecksum( const QString& fileName, QCryptographicHash::Algorithm hashAlgorithm )
 {
-    QFile sourceFile(fileName);
+    QFile sourceFile( fileName );
     qint64 fileSize = sourceFile.size();
     const qint64 bufferSize = 10240;
 
-    if (sourceFile.open(QIODevice::ReadOnly))
+    if( sourceFile.open( QIODevice::ReadOnly ) )
     {
         char buffer[bufferSize];
         int bytesRead;
-        int readSize = qMin(fileSize, bufferSize);
+        int readSize = qMin( fileSize, bufferSize );
 
-        QCryptographicHash hash(hashAlgorithm);
-        while (readSize > 0 && (bytesRead = sourceFile.read(buffer, readSize)) > 0)
+        QCryptographicHash hash( hashAlgorithm );
+        while( readSize > 0 && ( bytesRead = sourceFile.read( buffer, readSize ) ) > 0 )
         {
             fileSize -= bytesRead;
-            hash.addData(buffer, bytesRead);
-            readSize = qMin(fileSize, bufferSize);
+            hash.addData( buffer, bytesRead );
+            readSize = qMin( fileSize, bufferSize );
         }
 
         sourceFile.close();
-        return QString(hash.result().toHex());
+        return QString( hash.result().toHex() );
     }
     return QString();
 }
@@ -204,13 +252,13 @@ qint64 filePacker::appendFileToResult( const QString& fileName, QFile& resultFil
 
     char buffer[bufferSize];
     int bytesRead;
-    int readSize = qMin(fileSize, bufferSize);
+    int readSize = qMin( fileSize, bufferSize );
 
-    while( readSize > 0 && (bytesRead = inputFile.read(buffer, readSize) ) > 0 )
+    while( readSize > 0 && ( bytesRead = inputFile.read( buffer, readSize ) ) > 0 )
     {
         fileSize -= bytesRead;
-        resultFile.write( buffer, bytesRead);
-        readSize = qMin(fileSize, bufferSize);
+        resultFile.write( buffer, bytesRead );
+        readSize = qMin( fileSize, bufferSize );
     }
     inputFile.close();
     if( fileSize == 0 )
@@ -219,5 +267,39 @@ qint64 filePacker::appendFileToResult( const QString& fileName, QFile& resultFil
     {
         qInfo() << "Unable to copy whole file: " << fileName << '\n';
         return 0;
+    }
+}
+
+bool filePacker::makeFileFromBlob( QString& filePath, qint64 fileSize, QFile& blob )
+{
+    QFile resultFile( filePath );
+    const qint64 bufferSize = 10240;
+    qint64 startingFileSize = fileSize;
+
+    if( !resultFile.open( QIODevice::WriteOnly ) )
+    {
+        qInfo() << "Unable to create file: " << filePath << '\n';
+        return false;
+    }
+
+    char buffer[bufferSize];
+    int bytesRead;
+    int readSize = qMin( startingFileSize, bufferSize );
+
+    while( readSize > 0 && ( bytesRead = blob.read( buffer, readSize ) ) > 0 )
+    {
+        fileSize -= bytesRead;
+        resultFile.write( buffer, bytesRead );
+        readSize = qMin( fileSize, bufferSize );
+    }
+
+    resultFile.close();
+
+    if( fileSize == 0 )
+        return true;
+    else
+    {
+        qInfo() << "Unable to copy whole file: " << filePath << '\n';
+        return false;
     }
 }
