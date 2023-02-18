@@ -20,16 +20,18 @@ class filePacker
 {
 public:
     filePacker();
-    void pack(char* filePath, char* outPath);
-    void unPack(char* filePath, char* outDirPath);
-    void scanDirecory(char* dirPath);
-    bool saveDirDescription(QFile& resultFile);
-    bool validateFilePath(char* filePath);
-    bool validateFilePath(const QString& filePath);
-    bool validateDirPath(char* dirPath);
-    QString fileChecksum(const QString& fileName, QCryptographicHash::Algorithm hashAlgorithm);
+    void pack( char* filePath, char* outPath );
+    void unPack( char* filePath, char* outDirPath );
+    void scanDirecory( char* dirPath );
+    bool saveDirDescription( QFile& resultFile );
+    qint64 getFilesDescFromBlob( QFile& blob );
+    bool validateFilePath( char* filePath );
+    bool validateFilePath( const QString& filePath );
+    bool validateDirPath( char* dirPath );
+    bool uniqueFile( const QString& hash );
+    QString fileChecksum( const QString& fileName, QCryptographicHash::Algorithm hashAlgorithm );
     qint64 appendFileToResult( const QString& fileName, QFile& resultFile );
-    bool uniqueFile(const QString& hash);
+    bool makeFileFromBlob( QString& filePath, qint64 fileSize, QFile& blob );
 
 public:
     ProgressTicks* tick;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 5.0.2, 2023-02-16T22:28:10. -->
+<!-- Written by QtCreator 5.0.2, 2023-02-18T14:52:57. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -239,7 +239,6 @@
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:C:/Users/LF/Documents/CPP/Zadanie Navtor/BackToTheFuture/BackToTheFuture.pro</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">C:/Users/LF/Documents/CPP/Zadanie Navtor/BackToTheFuture/BackToTheFuture.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">-pack C:\Users\LF\Documents\Test2 &quot;C:\Users\LF\Documents\CPP\blob.dat&quot;</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>
