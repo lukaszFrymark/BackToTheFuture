@@ -9,7 +9,7 @@
 class FileInfo
 {
 public:
-    FileInfo(QString path, qint64  size, QString hash);
+    FileInfo(const QString& path, qint64  size, const QString& hash);
     FileInfo();
     QString path;
     qint64  size;
@@ -20,14 +20,13 @@ class FilePacker
 {
 public:
     FilePacker();
-    void pack(char* filePath, char* outPath);
-    void unPack(char* filePath, char* outDirPath);
-    void scanDirecory(char* dirPath);
+    void pack(const QString& filePath, const QString& outPath);
+    void unPack(const QString& filePath, const QString& outDirPath);
+    void scanDirecory(const QString& dirPath);
     bool saveDirDescription(QFile& resultFile);
     qint64 getFilesDescFromBlob(QFile& blob);
-    bool validateFilePath(char* filePath);
     bool validateFilePath(const QString& filePath);
-    bool validateDirPath(char* dirPath);
+    bool validateDirPath(const QString& dirPath);
     bool uniqueFile(const QString& hash);
     QString fileChecksum(const QString& fileName, QCryptographicHash::Algorithm hashAlgorithm);
     qint64 appendFileToResult(const QString& fileName, QFile& resultFile);
@@ -37,7 +36,6 @@ public:
     ProgressTicks tick;
     QString blobFileName;
     QVector<FileInfo> filesDesc;
-
 };
 
 #endif // FILEPACKER_H

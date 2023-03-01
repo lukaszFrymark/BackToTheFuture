@@ -2,7 +2,7 @@
 #include <QtCore>
 #include "filepacker.h"
 
-void helpMsg(char* progName)
+void helpMsg(const QString& progName)
 {
     qInfo() << progName << "[options]" << '\n' <<
             "Options:" << '\n' <<
@@ -18,17 +18,17 @@ int main(int argc, char* argv[])
 
     if (argc == 1 || QString(argv[1]).compare("-h") == 0)   //No args or '-h'
     {
-        helpMsg(argv[0]);
+        helpMsg(QString(argv[0]));
         return 0;
     }
     else if (argc > 3 && (QString(argv[1]).compare("-p") == 0 || QString(argv[1]).compare("-pack") == 0))   // -p or -pack with path
     {
-        fp.pack(argv[2], argv[3]);
+        fp.pack(QString(argv[2]), QString(argv[3]));
     }
 
     else if (argc > 3 && (QString(argv[1]).compare("-u") == 0 || QString(argv[1]).compare("-unpack") == 0))   // -u or -unpack with paths
     {
-        fp.unPack(argv[2], argv[3]);
+        fp.unPack(QString(argv[2]), QString(argv[3]));
     }
     else
     {

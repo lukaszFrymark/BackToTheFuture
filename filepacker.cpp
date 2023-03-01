@@ -1,6 +1,6 @@
 #include "filepacker.h"
 
-FileInfo::FileInfo(QString path, qint64  size, QString hash) :
+FileInfo::FileInfo(const QString& path, qint64  size, const QString& hash) :
     path{path}, size{size}, hash{hash} {}
 
 FileInfo::FileInfo() {}
@@ -10,7 +10,7 @@ FilePacker::FilePacker()
     ProgressTicks tick;
 }
 
-void FilePacker::pack(char* dirPath, char* outPath)
+void FilePacker::pack(const QString& dirPath, const QString& outPath)
 {
     qInfo() << "Packing direcory content:" << dirPath << '\n' <<
             "Into file:" << outPath << '\n';
@@ -48,7 +48,7 @@ void FilePacker::pack(char* dirPath, char* outPath)
     qInfo() << "\nPacking direcory content finished";
 }
 
-void FilePacker::unPack(char* filePath, char* outDirPath)
+void FilePacker::unPack(const QString& filePath, const QString& outDirPath)
 {
     qInfo() << "Unpacking file content:" << filePath << '\n' <<
             "Into direcory:" << outDirPath << '\n';
@@ -81,7 +81,7 @@ void FilePacker::unPack(char* filePath, char* outDirPath)
     qInfo() << "\nUnpacking direcory content finished";
 }
 
-void FilePacker::scanDirecory(char* dirPath)
+void FilePacker::scanDirecory(const QString& dirPath)
 {
     QDirIterator it(dirPath, QStringList() << "*.*", QDir::Files | QDir::Dirs, QDirIterator::Subdirectories);
     QDir dir(dirPath);
@@ -166,21 +166,7 @@ bool FilePacker::validateFilePath(const QString& filePath)
     return false;
 }
 
-bool FilePacker::validateFilePath(char* filePath)
-{
-    QFileInfo fi(filePath);
-    if (fi.exists() && fi.isFile())
-    {
-        return true;
-    }
-    else
-    {
-        qInfo() << "Given path is not a file:" << filePath;
-        return false;
-    }
-}
-
-bool FilePacker::validateDirPath(char* dirPath)
+bool FilePacker::validateDirPath(const QString& dirPath)
 {
     QFileInfo fi(dirPath);
     if (fi.exists() && fi.isDir())
