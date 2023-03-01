@@ -4,11 +4,11 @@
 
 class ProgressTicks
 {
-    public:
+public:
 
     ProgressTicks();
     void tick();
-    void static customHandler(QtMsgType, const QMessageLogContext &, const QString &msg);
+    void static customHandler(QtMsgType, const QMessageLogContext&, const QString& msg);
     int inc = 0;
     char bar[5] = "-\\|/";
 };

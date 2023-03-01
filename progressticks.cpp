@@ -12,7 +12,7 @@ void ProgressTicks::tick()
     qInstallMessageHandler(0);
 }
 
-void ProgressTicks::customHandler(QtMsgType, const QMessageLogContext &, const QString &msg)
+void ProgressTicks::customHandler(QtMsgType, const QMessageLogContext&, const QString& msg)
 {
     fprintf(stderr, msg.toLatin1().data());
     fflush(stderr);

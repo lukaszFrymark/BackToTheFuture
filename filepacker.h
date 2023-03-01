@@ -6,38 +6,36 @@
 #define HEADSTART "BLOBDESCSTART"
 #define HEADEND "BLOBDESCEND"
 
-class fileInfo
+class FileInfo
 {
 public:
-    fileInfo( QString path, qint64  size, QString hash );
-    fileInfo();
+    FileInfo(const QString& path, qint64  size, const QString& hash);
+    FileInfo();
     QString path;
     qint64  size;
     QString hash;
 };
 
-class filePacker
+class FilePacker
 {
 public:
-    filePacker();
-    void pack( char* filePath, char* outPath );
-    void unPack( char* filePath, char* outDirPath );
-    void scanDirecory( char* dirPath );
-    bool saveDirDescription( QFile& resultFile );
-    qint64 getFilesDescFromBlob( QFile& blob );
-    bool validateFilePath( char* filePath );
-    bool validateFilePath( const QString& filePath );
-    bool validateDirPath( char* dirPath );
-    bool uniqueFile( const QString& hash );
-    QString fileChecksum( const QString& fileName, QCryptographicHash::Algorithm hashAlgorithm );
-    qint64 appendFileToResult( const QString& fileName, QFile& resultFile );
-    bool makeFileFromBlob( QString& filePath, qint64 fileSize, QFile& blob );
+    FilePacker();
+    void pack(const QString& filePath, const QString& outPath);
+    void unPack(const QString& filePath, const QString& outDirPath);
+    void scanDirecory(const QString& dirPath);
+    bool saveDirDescription(QFile& resultFile);
+    qint64 getFilesDescFromBlob(QFile& blob);
+    bool validateFilePath(const QString& filePath);
+    bool validateDirPath(const QString& dirPath);
+    bool uniqueFile(const QString& hash);
+    QString fileChecksum(const QString& fileName, QCryptographicHash::Algorithm hashAlgorithm);
+    qint64 appendFileToResult(const QString& fileName, QFile& resultFile);
+    bool makeFileFromBlob(QString& filePath, qint64 fileSize, QFile& blob);
 
 public:
-    ProgressTicks* tick;
+    ProgressTicks tick;
     QString blobFileName;
-    QVector<fileInfo> filesDesc;
-
+    QVector<FileInfo> filesDesc;
 };
 
 #endif // FILEPACKER_H
